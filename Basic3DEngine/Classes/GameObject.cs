@@ -15,6 +15,7 @@ namespace Vanilla3DEngine.Classes {
             Vel = Vector3.Zero;
             Transform = new Transform() { Pos = Vector3.Zero, Rot = Vector3.Zero };
             Col = Color.White;
+            Dynamic = true;
         }
 
         public float Mass { get; set; }
@@ -23,8 +24,11 @@ namespace Vanilla3DEngine.Classes {
         public Color Col { get; set; }
         public Mesh Mesh { get; set; }
         public Transform Transform { get; set; }
+        public bool Dynamic { get; set; }
 
-        public void Step(float deltaTime, Vector3 gravity) {
+        public virtual void Step(float deltaTime, Vector3 gravity) {
+            if (!Dynamic) return;
+
             Force = gravity * Mass;
             Vel += Force / Mass * deltaTime;
             Transform.Pos += Vel * deltaTime;

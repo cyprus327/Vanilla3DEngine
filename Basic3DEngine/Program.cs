@@ -3,7 +3,7 @@
 namespace Vanilla3DEngine {
     class Program {
         static void Main() {
-            Engine game = new UsageExample(new Size(1280, 720), "window");
+            Engine game = new BasicExample(new Size(1280, 720), "window title");
             game.Run();
         }
     }

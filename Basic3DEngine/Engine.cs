@@ -41,12 +41,14 @@ namespace Vanilla3DEngine {
         private float _delta = 0f;
         private readonly DeltaTime _deltaTime = new DeltaTime();
 
+        private static readonly List<GameObject> _objects = new List<GameObject>(); // gets cleared and remade every frame
+        private static readonly Dictionary<int, GameObject> _dict = new Dictionary<int, GameObject>();
+
         private readonly TriangleDepthComparer _depthComparer = new TriangleDepthComparer();
         private readonly string _title = "";
         private readonly Canvas _window = null;
         private readonly Thread _mainThread = null;
         private static readonly List<Triangle> _renderStack = new List<Triangle>();
-        private static readonly List<GameObject> _objects = new List<GameObject>(); // gets cleared and remade every frame
         private int _renderType = 2;
         private string _currentRenderType;
         private Mat4x4 _projectionMat = Mat4x4.New;
@@ -76,13 +78,6 @@ namespace Vanilla3DEngine {
 
         public abstract void Update(Graphics g, float deltaTime);
 
-        public void HandleObjects(List<GameObject> objects) {
-            for (int i = objects.Count - 1; i >= 0; i--) {
-                objects[i].Step(_delta, Gravity);
-                DrawObject(objects[i], objects[i].Transform.Pos);
-            }
-        }
-
         private void Renderer(object sender, PaintEventArgs e) {
             _mainGraphics = e.Graphics;
 
@@ -90,8 +85,8 @@ namespace Vanilla3DEngine {
 
             _delta = _deltaTime.Get();
 
+            HandleObjects();
             Update(_mainGraphics, _delta);
-
             Render(_mainGraphics, ShowDebugInfo);
         }
 
@@ -111,7 +106,8 @@ namespace Vanilla3DEngine {
                          $"Camera Rot:  {MainCamera.Transform.Rot}\n\n" +
                          $"Render Mode: {_currentRenderType}\n" +
                          $"Triangles:   {_renderStack.Count}\n" +
-                         $"Meshes:      {_objects.Count}",
+                         $"Meshes:      {_objects.Count}\n" +
+                         $"Objects:     {_dict.Count}",
                          ScreenTextFont, ScreenTextBrush, 0, 0);
             }
 
@@ -161,8 +157,28 @@ namespace Vanilla3DEngine {
             }
         }
         
-        public void DrawObject(GameObject obj, Vector3 position) => 
-            RasterizeTris(GetTrisToRaster(obj, position));
+        public void DrawObject(GameObject obj) {
+            RasterizeTris(GetTrisToRaster(obj, obj.Transform.Pos));
+        }
+        
+        private void HandleObjects() {
+            foreach (var value in _dict.Values) {
+                value.Step(_delta, Gravity);
+                DrawObject(value);
+            }
+        }
+
+        public void Instantiate(GameObject obj, int id) {
+            if (_dict.ContainsKey(id)) throw new ArgumentException($"ID must be unique, {id} is already in use.");
+            _dict.Add(id, obj);
+        }
+
+        public void Destroy(int id) {
+            if (!_dict.ContainsKey(id)) throw new ArgumentException($"ID {id} provided does not exist.");
+            _dict.Remove(id);
+        }
+
+        public Dictionary<int, GameObject> GetObjects => _dict;
 
         public void ShowMessageOnCenter(Graphics g, string message) {
             if (g == null) return;
@@ -171,7 +187,7 @@ namespace Vanilla3DEngine {
                 ScreenSize.Height / 2);
         }
         
-        public void HandleInput(float moveSpeed, float turnSpeed) {
+        public void HandleInput(float moveSpeed = 10f, float turnSpeed = 2.5f) {
             if (Input.GetKeyDown('V')) // sprint
                 moveSpeed *= 3f;
 
