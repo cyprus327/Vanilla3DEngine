@@ -13,10 +13,11 @@ Code to generate the explosion
 # Basic Usage
 ## Getting started:
 1. Create a class that inherits from Engine
-2. Create a constructor that takes in a Size and string ![1st steps code](https://i.postimg.cc/4NjHT8m7/image.png "Code for example class and constructor")
-3. Override the Awake and Update methods
-4. In Program.cs or wherever your Main method is, create a variable of type Engine and set it equal to the new class you've created
-5. Call .Run() on the variable
+2. Create a constructor that takes in a Size and string 
+![1st steps code](https://i.postimg.cc/4NjHT8m7/image.png "Code for example class and constructor")
+4. Override the Awake and Update methods
+5. In Program.cs or wherever your Main method is, create a variable of type Engine and set it equal to the new class you've created
+6. Call .Run() on the variable
 ## Update and Awake overrides:
 Awake is run first as soon as the program begins, and Update is run every frame after that.
 ## GameObjects:
