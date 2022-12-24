@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Drawing;
+using System.Linq;
 using Vanilla3DEngine.Classes;
 using Vanilla3DEngine.Structs;
 
@@ -12,25 +9,36 @@ namespace Vanilla3DEngine {
         public BasicExample(Size screenSize, string title) : base(screenSize, title) {
         }
 
-        private readonly GameObject sphere = new GameObject(Mesh.SphereHighPoly) {
-            Transform = new Transform() { Pos = new Vector3(2.5f, 0f, 0f) },
-            Dynamic = false
+        private readonly GameObject obj1 = new GameObject(Mesh.Cube) {
+            Transform = new Transform() { Pos = new Vector3(0f, 5f, 10f) },
+            Dynamic = true,
+            Col = Color.Red
         };
-        private readonly GameObject cube = new GameObject(Mesh.Cube) {
-            Transform = new Transform() { Pos = new Vector3(-2.5f, 0f, 0f) },
+        private readonly GameObject obj2 = new GameObject(Mesh.Cube) {
+            Transform = new Transform() { Pos = new Vector3(0f, -2f, 10f) },
             Dynamic = false
         };
 
-        // You can either instantiate an object and have it stored and rendered until
-        // you remove it, or just Draw a certain object.
         public override void Awake() {
-            Instantiate(cube, 0);
+            //ShowDebugInfo = true;
+            Instantiate(obj1, 0);
+            Instantiate(obj2, 1);
         }
 
         public override void Update(Graphics g, float deltaTime) {
-            HandleInput();
-            g.DrawString("Press F to show a sphere", ScreenTextFont, ScreenTextBrush, 0, 0);
-            if (Input.GetKeyDown('F')) DrawObject(sphere);
+            base.HandleInput();
+            GameObject.HandleCollisions();
+
+            if (Input.GetKeyDown('R')) {
+                obj1.Dynamic = false;
+            }
+            else if (obj1.Transform.Pos.Y <= -8.5f || Input.GetKeyDown('\t')) {
+                obj1.Transform.Pos = new Vector3(0f, 5f, 10f);
+                obj1.Vel = Vector3.Zero;
+            }
+            else {
+                obj1.Dynamic = true;
+            }
         }
     }
 }

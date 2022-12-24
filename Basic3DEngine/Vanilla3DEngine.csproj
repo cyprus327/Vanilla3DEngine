@@ -54,11 +54,10 @@
   <ItemGroup>
     <Compile Include="BasicExample.cs" />
     <Compile Include="Classes\Camera.cs" />
-    <Compile Include="Classes\Collision\Collider.cs" />
-    <Compile Include="Classes\Collision\CollisionPoint.cs" />
+    <Compile Include="Structs\BoundingBox.cs" />
     <Compile Include="Classes\GameObject.cs" />
     <Compile Include="Structs\Mat4x4.cs" />
-    <Compile Include="Classes\Mesh.cs" />
+    <Compile Include="Structs\Mesh.cs" />
     <Compile Include="Classes\Transform.cs" />
     <Compile Include="Classes\TriangleDepthComparer.cs" />
     <Compile Include="Structs\Vector3.cs" />

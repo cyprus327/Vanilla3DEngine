@@ -6,28 +6,28 @@ namespace Vanilla3DEngine.Structs {
     public struct Triangle {
         public Triangle(Vector3[] points) {
             if (points.Length != 3) throw new ArgumentOutOfRangeException("Triangles only have 3 sides.");
-            Points = points;
+            Verts = points;
             Col = default;
         }
 
-        public Vector3[] Points { get; set; }
+        public Vector3[] Verts { get; set; }
         public Color Col { get; set; }
 
         public void Draw(Graphics g, Color col, bool fill) {
             Col = col;
             if (!fill) {
                 using (Pen p = new Pen(Col)) {
-                    g.DrawLine(p, Points[0].X, Points[0].Y, Points[1].X, Points[1].Y);
-                    g.DrawLine(p, Points[1].X, Points[1].Y, Points[2].X, Points[2].Y);
-                    g.DrawLine(p, Points[2].X, Points[2].Y, Points[0].X, Points[0].Y);
+                    g.DrawLine(p, Verts[0].X, Verts[0].Y, Verts[1].X, Verts[1].Y);
+                    g.DrawLine(p, Verts[1].X, Verts[1].Y, Verts[2].X, Verts[2].Y);
+                    g.DrawLine(p, Verts[2].X, Verts[2].Y, Verts[0].X, Verts[0].Y);
                 }
             }
             else {
                 using (SolidBrush b = new SolidBrush(Col)) {
                     g.FillPolygon(b, new PointF[] { 
-                        new PointF(Points[0].X, Points[0].Y),
-                        new PointF(Points[1].X, Points[1].Y),
-                        new PointF(Points[2].X, Points[2].Y)
+                        new PointF(Verts[0].X, Verts[0].Y),
+                        new PointF(Verts[1].X, Verts[1].Y),
+                        new PointF(Verts[2].X, Verts[2].Y)
                     });
                 }
             }
@@ -46,25 +46,25 @@ namespace Vanilla3DEngine.Structs {
             Vector3[] outsidePoints = new Vector3[3]; 
             int outsidePointCount = 0;
 
-            float d0 = Dist(tri.Points[0]);
-            float d1 = Dist(tri.Points[1]);
-            float d2 = Dist(tri.Points[2]);
+            float d0 = Dist(tri.Verts[0]);
+            float d1 = Dist(tri.Verts[1]);
+            float d2 = Dist(tri.Verts[2]);
 
-            if (d0 >= 0) { insidePoints[insidePointCount++] = tri.Points[0]; }
+            if (d0 >= 0) { insidePoints[insidePointCount++] = tri.Verts[0]; }
             else {
-                outsidePoints[outsidePointCount++] = tri.Points[0];
+                outsidePoints[outsidePointCount++] = tri.Verts[0];
             }
             if (d1 >= 0) {
-                insidePoints[insidePointCount++] = tri.Points[1];
+                insidePoints[insidePointCount++] = tri.Verts[1];
             }
             else {
-                outsidePoints[outsidePointCount++] = tri.Points[1];
+                outsidePoints[outsidePointCount++] = tri.Verts[1];
             }
             if (d2 >= 0) {
-                insidePoints[insidePointCount++] = tri.Points[2];
+                insidePoints[insidePointCount++] = tri.Verts[2];
             }
             else {
-                outsidePoints[outsidePointCount++] = tri.Points[2];
+                outsidePoints[outsidePointCount++] = tri.Verts[2];
             }
 
             if (insidePointCount == 0 || outsidePointCount== 3) {
@@ -80,9 +80,9 @@ namespace Vanilla3DEngine.Structs {
             if (insidePointCount == 1 && outsidePointCount == 2) {
                 outTri1.Col = tri.Col;
 
-                outTri1.Points[0] = insidePoints[0];
-                outTri1.Points[1] = Vector3.IntersectPlane(planeP, planeN, insidePoints[0], outsidePoints[0]);
-                outTri1.Points[2] = Vector3.IntersectPlane(planeP, planeN, insidePoints[0], outsidePoints[1]);
+                outTri1.Verts[0] = insidePoints[0];
+                outTri1.Verts[1] = Vector3.IntersectPlane(planeP, planeN, insidePoints[0], outsidePoints[0]);
+                outTri1.Verts[2] = Vector3.IntersectPlane(planeP, planeN, insidePoints[0], outsidePoints[1]);
                 return 1;
             }
 
@@ -91,13 +91,13 @@ namespace Vanilla3DEngine.Structs {
 
                 outTri2.Col = tri.Col;
 
-                outTri1.Points[0] = insidePoints[0];
-                outTri1.Points[1] = insidePoints[1];
-                outTri1.Points[2] = Vector3.IntersectPlane(planeP, planeN, insidePoints[0], outsidePoints[0]);
+                outTri1.Verts[0] = insidePoints[0];
+                outTri1.Verts[1] = insidePoints[1];
+                outTri1.Verts[2] = Vector3.IntersectPlane(planeP, planeN, insidePoints[0], outsidePoints[0]);
 
-                outTri2.Points[0] = insidePoints[1];
-                outTri2.Points[1] = outTri1.Points[2];
-                outTri2.Points[2] = Vector3.IntersectPlane(planeP, planeN, insidePoints[1], outsidePoints[0]);
+                outTri2.Verts[0] = insidePoints[1];
+                outTri2.Verts[1] = outTri1.Verts[2];
+                outTri2.Verts[2] = Vector3.IntersectPlane(planeP, planeN, insidePoints[1], outsidePoints[0]);
 
                 return 2;
             }

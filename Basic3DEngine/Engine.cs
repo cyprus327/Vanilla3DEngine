@@ -42,7 +42,7 @@ namespace Vanilla3DEngine {
         private readonly DeltaTime _deltaTime = new DeltaTime();
 
         private static readonly List<GameObject> _objects = new List<GameObject>(); // gets cleared and remade every frame
-        private static readonly Dictionary<int, GameObject> _dict = new Dictionary<int, GameObject>();
+        private static readonly Dictionary<int, GameObject> _dict = new Dictionary<int, GameObject>(); // persistent
 
         private readonly TriangleDepthComparer _depthComparer = new TriangleDepthComparer();
         private readonly string _title = "";
@@ -117,8 +117,7 @@ namespace Vanilla3DEngine {
         }
 
         private void DrawTriangles(Graphics g, List<Triangle> tris) {
-            int count = tris.Count;
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < tris.Count; i++) {
                 DrawTriangle(g, tris[i]);
             }
 
@@ -158,7 +157,7 @@ namespace Vanilla3DEngine {
         }
         
         public void DrawObject(GameObject obj) {
-            RasterizeTris(GetTrisToRaster(obj, obj.Transform.Pos));
+            RasterizeTris(GetTrisToRaster(obj));
         }
         
         private void HandleObjects() {
@@ -169,16 +168,14 @@ namespace Vanilla3DEngine {
         }
 
         public void Instantiate(GameObject obj, int id) {
-            if (_dict.ContainsKey(id)) throw new ArgumentException($"ID must be unique, {id} is already in use.");
-            _dict.Add(id, obj);
+            if (!_dict.ContainsKey(id)) _dict.Add(id, obj);
         }
 
         public void Destroy(int id) {
-            if (!_dict.ContainsKey(id)) throw new ArgumentException($"ID {id} provided does not exist.");
-            _dict.Remove(id);
+            if (_dict.ContainsKey(id)) _dict.Remove(id);
         }
 
-        public Dictionary<int, GameObject> GetObjects => _dict;
+        public static Dictionary<int, GameObject> GetObjects => _dict;
 
         public void ShowMessageOnCenter(Graphics g, string message) {
             if (g == null) return;
@@ -205,7 +202,7 @@ namespace Vanilla3DEngine {
             else if (Input.GetKeyDown('Q'))
                 _playerYaw -= turnSpeed * _delta;
 
-            Vector3 forward = MainCamera.Transform.Rot * (moveSpeed * _delta);
+            Vector3 forward = MainCamera.Transform.Rot * moveSpeed * _delta;
             // move forward
             if (Input.GetKeyDown('W'))
                 MainCamera.Transform.Pos += forward;
@@ -213,7 +210,7 @@ namespace Vanilla3DEngine {
             else if (Input.GetKeyDown('S'))
                 MainCamera.Transform.Pos -= forward;
 
-            Vector3 right = Vector3.CrossProduct(forward, Vector3.Up);
+            Vector3 right = Vector3.Cross(forward, Vector3.Up);
             // move backward
             if (Input.GetKeyDown('D'))
                 MainCamera.Transform.Pos += right;
@@ -231,10 +228,10 @@ namespace Vanilla3DEngine {
                 _renderType = 4; 
         }
 
-        private List<Triangle> GetTrisToRaster(GameObject obj, Vector3 position) {
+        private List<Triangle> GetTrisToRaster(GameObject obj) {
             List<Triangle> output = new List<Triangle>();
             
-            Mat4x4 transMat = Mat4x4.MakeTranslation(position.X, position.Y, position.Z);
+            Mat4x4 transMat = Mat4x4.MakeTranslation(obj.Transform.Pos.X, obj.Transform.Pos.Y, obj.Transform.Pos.Z);
             Mat4x4 worldMat = Mat4x4.IntrinsicFromEuler(obj.Transform.Rot);
             worldMat = Mat4x4.MultiplyMatrix(worldMat, transMat); // translate/combine into one worldMat
 
@@ -250,18 +247,18 @@ namespace Vanilla3DEngine {
                 Triangle transformed = new Triangle(new Vector3[3]);
                 Triangle viewed = new Triangle(new Vector3[3]);
 
-                transformed.Points[0] = Vector3.MatrixMultiplyVector(worldMat, obj.Mesh.Tris[i].Points[0]);
-                transformed.Points[1] = Vector3.MatrixMultiplyVector(worldMat, obj.Mesh.Tris[i].Points[1]);
-                transformed.Points[2] = Vector3.MatrixMultiplyVector(worldMat, obj.Mesh.Tris[i].Points[2]);
+                transformed.Verts[0] = Vector3.MatrixMultiplyVector(worldMat, obj.Mesh.Tris[i].Verts[0]);
+                transformed.Verts[1] = Vector3.MatrixMultiplyVector(worldMat, obj.Mesh.Tris[i].Verts[1]);
+                transformed.Verts[2] = Vector3.MatrixMultiplyVector(worldMat, obj.Mesh.Tris[i].Verts[2]);
 
                 // get lines on either side of triangle
-                Vector3 line1 = transformed.Points[1] - transformed.Points[0];
-                Vector3 line2 = transformed.Points[2] - transformed.Points[0];
+                Vector3 line1 = transformed.Verts[1] - transformed.Verts[0];
+                Vector3 line2 = transformed.Verts[2] - transformed.Verts[0];
 
                 // take cross product of lines to get normal to triangle surface
-                Vector3 normal = Vector3.Normalize(Vector3.CrossProduct(line1, line2));
+                Vector3 normal = Vector3.Normalize(Vector3.Cross(line1, line2));
 
-                Vector3 cameraRay = transformed.Points[0] - MainCamera.Transform.Pos;
+                Vector3 cameraRay = transformed.Verts[0] - MainCamera.Transform.Pos;
 
                 if (Vector3.Dot(normal, cameraRay) < 0f) {
                     // how aligned are the light direction and the surface normal
@@ -272,9 +269,9 @@ namespace Vanilla3DEngine {
                     transformed.Col = Color.FromArgb(obj.Col.A, Math.Abs((int)(dp * obj.Col.R)), Math.Abs((int)(dp * obj.Col.G)), Math.Abs((int)(dp * obj.Col.B)));
 
                     // convert from world space to view space
-                    viewed.Points[0] = Vector3.MatrixMultiplyVector(viewMat, transformed.Points[0]);
-                    viewed.Points[1] = Vector3.MatrixMultiplyVector(viewMat, transformed.Points[1]);
-                    viewed.Points[2] = Vector3.MatrixMultiplyVector(viewMat, transformed.Points[2]);
+                    viewed.Verts[0] = Vector3.MatrixMultiplyVector(viewMat, transformed.Verts[0]);
+                    viewed.Verts[1] = Vector3.MatrixMultiplyVector(viewMat, transformed.Verts[1]);
+                    viewed.Verts[2] = Vector3.MatrixMultiplyVector(viewMat, transformed.Verts[2]);
                     viewed.Col = transformed.Col;
 
                     // clip viewed triangles against near plane
@@ -284,36 +281,36 @@ namespace Vanilla3DEngine {
                     // choose how to project the two clipped triangles
                     for (int j = 0; j < clippedTris; j++) {
                         // project from 3d to 2d
-                        projected.Points[0] = Vector3.MatrixMultiplyVector(_projectionMat, clipped[j].Points[0]);
-                        projected.Points[1] = Vector3.MatrixMultiplyVector(_projectionMat, clipped[j].Points[1]);
-                        projected.Points[2] = Vector3.MatrixMultiplyVector(_projectionMat, clipped[j].Points[2]);
+                        projected.Verts[0] = Vector3.MatrixMultiplyVector(_projectionMat, clipped[j].Verts[0]);
+                        projected.Verts[1] = Vector3.MatrixMultiplyVector(_projectionMat, clipped[j].Verts[1]);
+                        projected.Verts[2] = Vector3.MatrixMultiplyVector(_projectionMat, clipped[j].Verts[2]);
                         projected.Col = clipped[j].Col;
 
                         // scale into view by normalising into cartesian space
-                        projected.Points[0] /= projected.Points[0].W;
-                        projected.Points[1] /= projected.Points[1].W;
-                        projected.Points[2] /= projected.Points[2].W;
+                        projected.Verts[0] /= projected.Verts[0].W;
+                        projected.Verts[1] /= projected.Verts[1].W;
+                        projected.Verts[2] /= projected.Verts[2].W;
 
                         // x and y are inverted somehow so invert them again to make them normal
-                        projected.Points[0].X *= -1f;
-                        projected.Points[0].Y *= -1f;
-                        projected.Points[1].X *= -1f;
-                        projected.Points[1].Y *= -1f;
-                        projected.Points[2].X *= -1f;
-                        projected.Points[2].Y *= -1f;
+                        projected.Verts[0].X *= -1f;
+                        projected.Verts[0].Y *= -1f;
+                        projected.Verts[1].X *= -1f;
+                        projected.Verts[1].Y *= -1f;
+                        projected.Verts[2].X *= -1f;
+                        projected.Verts[2].Y *= -1f;
 
                         // scale to screen
                         Vector3 viewOffset = new Vector3(1f, 1f, 0f);
-                        projected.Points[0] += viewOffset;
-                        projected.Points[1] += viewOffset;
-                        projected.Points[2] += viewOffset;
+                        projected.Verts[0] += viewOffset;
+                        projected.Verts[1] += viewOffset;
+                        projected.Verts[2] += viewOffset;
 
-                        projected.Points[0].X *= 0.5f * (float)ScreenSize.Width;
-                        projected.Points[0].Y *= 0.5f * (float)ScreenSize.Height;
-                        projected.Points[1].X *= 0.5f * (float)ScreenSize.Width;
-                        projected.Points[1].Y *= 0.5f * (float)ScreenSize.Height;
-                        projected.Points[2].X *= 0.5f * (float)ScreenSize.Width;
-                        projected.Points[2].Y *= 0.5f * (float)ScreenSize.Height;
+                        projected.Verts[0].X *= 0.5f * (float)ScreenSize.Width;
+                        projected.Verts[0].Y *= 0.5f * (float)ScreenSize.Height;
+                        projected.Verts[1].X *= 0.5f * (float)ScreenSize.Width;
+                        projected.Verts[1].Y *= 0.5f * (float)ScreenSize.Height;
+                        projected.Verts[2].X *= 0.5f * (float)ScreenSize.Width;
+                        projected.Verts[2].Y *= 0.5f * (float)ScreenSize.Height;
 
                         output.Add(projected);
                     }
@@ -356,24 +353,24 @@ namespace Vanilla3DEngine {
                     int trisToAdd = Triangle.ClipAgainstPlane(planeNormal, planePoint, ref test, ref clipped[0], ref clipped[1]);
 
                     if (trisToAdd == 0) {
-                        // the triangle is completely outside the clipping plane, so discard it
+                        // the triangle is completely outside the clipping plane so discard it
                         break;
                     }
                     else if (trisToAdd == 1) {
-                        // the triangle was partially inside and partially outside the clipping plane,
+                        // the triangle was partially inside and partially outside the clipping plane
                         // so replace the input triangle with the newly created triangle
                         test = clipped[0];
                     }
                     else {
-                        // the triangle was split into two new triangles by the clipping plane,
+                        // the triangle was split into two new triangles by the clipping plane
                         // so add both triangles to the list of triangles to process
                         output.Add(clipped[0]);
                         test = clipped[1];
                     }
                 }
 
-                // if the triangle survived all four clipping planes, add it to the final list of triangles
-                if (test.Points[0] != Vector3.Zero || test.Points[1] != Vector3.Zero || test.Points[2] != Vector3.Zero)
+                // if the triangle survived all four clipping planes add it to the final list of triangles
+                if (test.Verts[0] != Vector3.Zero || test.Verts[1] != Vector3.Zero || test.Verts[2] != Vector3.Zero)
                     output.Add(test);
             }
 

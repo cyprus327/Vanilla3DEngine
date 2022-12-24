@@ -128,7 +128,7 @@ namespace Vanilla3DEngine.Structs {
             newUp = Vector3.Normalize(newUp);
 
             // new right direction is cross product
-            Vector3 newRight = Vector3.CrossProduct(newUp, newForward);
+            Vector3 newRight = Vector3.Cross(newUp, newForward);
 
             Mat4x4 mat = New;
             mat.Mat[0][0] = newRight.X;

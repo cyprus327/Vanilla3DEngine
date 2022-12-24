@@ -22,7 +22,7 @@ namespace Vanilla3DEngine.Structs {
 
         private static readonly Random _r = new Random();
 
-        public override string ToString() => $"({X, 7:F2}, {Y, 7:F2}, {Z, 7:F2})";
+        public override string ToString() => $"({X, 4:F2}, {Y, 4:F2}, {Z, 4:F2})";
         
         public static Vector3 Zero => new Vector3(0f, 0f, 0f);
         public static Vector3 One => new Vector3(1f, 1f, 1f);
@@ -38,11 +38,15 @@ namespace Vanilla3DEngine.Structs {
 
         public static Vector3 operator +(Vector3 a, Vector3 b) => new Vector3(a.X + b.X, a.Y + b.Y, a.Z + b.Z);
         public static Vector3 operator -(Vector3 a, Vector3 b) => new Vector3(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+        public static Vector3 operator +(Vector3 a, float n) => new Vector3(a.X + n, a.Y + n, a.Z + n);
+        public static Vector3 operator -(Vector3 a, float n) => new Vector3(a.X - n, a.Y - n, a.Z - n);
         public static Vector3 operator *(Vector3 a, float n) => new Vector3(a.X * n, a.Y * n, a.Z * n);
         public static Vector3 operator /(Vector3 a, float n) => new Vector3(a.X / n, a.Y / n, a.Z / n);
         public static bool operator ==(Vector3 a, Vector3 b) => a.X == b.X && a.Y == b.Z && a.Z == b.Z && a.W == b.W;
         public static bool operator !=(Vector3 a, Vector3 b) => a.X != b.X || a.Y != b.Z || a.Z != b.Z || a.W != b.W;
-        
+        public static bool operator <=(Vector3 a, Vector3 b) => a.X <= b.X && a.Y <= b.Y && a.Z <= b.Z;
+        public static bool operator >=(Vector3 a, Vector3 b) => a.X >= b.X && a.Y >= b.Y && a.Z >= b.Z;
+
         // overrides to make visual studio shut up
         public override bool Equals(object obj) => base.Equals(obj);
         public override int GetHashCode() => base.GetHashCode();
@@ -58,9 +62,11 @@ namespace Vanilla3DEngine.Structs {
 
         public static float Magnitude(Vector3 v) => (float)Math.Sqrt(Dot(v, v));
 
+        public float MagnitudeSquared() => (X * X) + (Y * Y) + (Z * Z);
+
         public static Vector3 Normalize(Vector3 v) => v / Magnitude(v);
 
-        public static Vector3 CrossProduct(Vector3 a, Vector3 b) => new Vector3(a.Y * b.Z - a.Z * b.Y, a.Z * b.X - a.X * b.Z, a.X * b.Y - a.Y * b.X);
+        public static Vector3 Cross(Vector3 a, Vector3 b) => new Vector3(a.Y * b.Z - a.Z * b.Y, a.Z * b.X - a.X * b.Z, a.X * b.Y - a.Y * b.X);
 
         public static Vector3 IntersectPlane(Vector3 planeP, Vector3 planeN, Vector3 lineStart, Vector3 lineEnd) {
             planeN = Normalize(planeN);
@@ -71,6 +77,18 @@ namespace Vanilla3DEngine.Structs {
             Vector3 lineStartToEnd = lineEnd - lineStart;
             Vector3 lineToIntersect = lineStartToEnd * t;
             return lineStart + lineToIntersect;
+        }
+
+        public static Vector3 Project(Vector3 v, Vector3 onto) {
+            return onto * (Dot(v, onto) / Dot(onto, onto));
+        }
+
+        public static Vector3 Min(Vector3 a, Vector3 b) {
+            return new Vector3(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y), Math.Min(a.Z, b.Z));
+        }
+
+        public static Vector3 Max(Vector3 a, Vector3 b) {
+            return new Vector3(Math.Max(a.X, b.X), Math.Max(a.Y, b.Y), Math.Max(a.Z, b.Z));
         }
 
         public static Vector3 Random(int bottomRange, int topRange) => 
