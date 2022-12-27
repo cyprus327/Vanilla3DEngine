@@ -2,7 +2,7 @@
 ## 3D Rendering and physics in vanilla C#, no OpenGL or any other libraries.
 - Made to be very simple to use
 - Comes with some primitives but also supports loading OBJ files
-- Dynamic objects / static objects supported
+- Dynamic objects / static objects supported (collision detection uses GJK)
 # Examples:
 ### Utah teapot
 ![utah teapot](https://i.postimg.cc/JzZbGwXC/image.png "Utah Teapot Example")
